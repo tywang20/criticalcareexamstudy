@@ -1,0 +1,4 @@
+# Extracted book content stays out of the public repo; it lives only in the private artifact.
+app/questions.json
+app/img/
+__pycache__/

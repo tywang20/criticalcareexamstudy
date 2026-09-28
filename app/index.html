@@ -1,0 +1,743 @@
+<title>Critical Care Qbank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+:root {
+  --ground: #f3f5f6;
+  --surface: #ffffff;
+  --surface-2: #e8edf0;
+  --ink: #15202a;
+  --ink-2: #4a5866;
+  --ink-3: #7b8894;
+  --line: #d5dde3;
+  --accent: #2c5f8f;
+  --accent-ink: #ffffff;
+  --accent-soft: #dde8f3;
+  --ok: #1d7f47;
+  --ok-soft: #dcf1e4;
+  --bad: #b8322a;
+  --bad-soft: #f8e0dd;
+  --shadow: 0 1px 2px rgba(21, 32, 42, .06), 0 8px 24px rgba(21, 32, 42, .06);
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --side-w: 300px;
+  --top-h: 56px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0e1418;
+    --surface: #151d23;
+    --surface-2: #1d272e;
+    --ink: #e2e8ec;
+    --ink-2: #a8b4bd;
+    --ink-3: #75838e;
+    --line: #2a353d;
+    --accent: #7eb0de;
+    --accent-ink: #0e1418;
+    --accent-soft: #1d3246;
+    --ok: #5cc98a;
+    --ok-soft: #173325;
+    --bad: #f07d73;
+    --bad-soft: #3a1c1a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0e1418;
+  --surface: #151d23;
+  --surface-2: #1d272e;
+  --ink: #e2e8ec;
+  --ink-2: #a8b4bd;
+  --ink-3: #75838e;
+  --line: #2a353d;
+  --accent: #7eb0de;
+  --accent-ink: #0e1418;
+  --accent-soft: #1d3246;
+  --ok: #5cc98a;
+  --ok-soft: #173325;
+  --bad: #f07d73;
+  --bad-soft: #3a1c1a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 30;
+  height: var(--top-h);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-inline: 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.menu-btn {
+  display: none;
+  width: 40px; height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  align-items: center; justify-content: center;
+}
+.menu-btn svg { width: 20px; height: 20px; }
+.brand { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.brand b { font-weight: 700; font-size: 15px; letter-spacing: .01em; }
+.brand span { font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stats { margin-left: auto; display: flex; gap: 18px; align-items: center; }
+.stat { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+.stat .v { font-family: var(--mono); font-weight: 600; font-size: 16px; font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.sync { font-size: 11.5px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); display: inline-block; }
+.sync[data-state="saved"] i { background: var(--ok); }
+.sync[data-state="saving"] i { background: var(--accent); }
+.sync[data-state="offline"] i, .sync[data-state="local"] i { background: var(--bad); }
+
+/* ---------- layout ---------- */
+.shell { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); height: calc(100% - var(--top-h)); }
+.side {
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 14px 40px;
+}
+.main { overflow-y: auto; padding-inline: 16px; padding-block: 24px 120px; }
+.scrim { display: none; }
+
+/* ---------- sidebar ---------- */
+.side-summary {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+  margin-bottom: 14px;
+}
+.side-summary div {
+  background: var(--surface-2); border-radius: 8px; padding: 8px 10px;
+  display: flex; flex-direction: column;
+}
+.side-summary .v { font-family: var(--mono); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; }
+.side-summary .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.sys { margin-bottom: 14px; }
+.sys-head {
+  display: flex; align-items: baseline; gap: 8px;
+  width: 100%; border: 0; background: none; padding: 6px 2px; cursor: pointer; text-align: left;
+  position: sticky; top: -12px; background: var(--surface); z-index: 1;
+}
+.sys-head .n { font-family: var(--mono); font-size: 11px; color: var(--ink-3); min-width: 20px; }
+.sys-head .t { font-weight: 600; font-size: 13px; flex: 1; }
+.sys-head .c { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 5px; padding-left: 2px; }
+.chip {
+  position: relative;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 2px;
+  color: var(--ink-2);
+}
+.chip:hover { border-color: var(--accent); }
+.chip.ok { background: var(--ok-soft); border-color: transparent; color: var(--ok); font-weight: 600; }
+.chip.bad { background: var(--bad-soft); border-color: transparent; color: var(--bad); font-weight: 600; }
+.chip .mk { font-size: 10px; line-height: 1; }
+.chip.cur { outline: 2px solid var(--accent); outline-offset: 1px; color: var(--ink); }
+.side-foot { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 14px; font-size: 12.5px; color: var(--ink-3); display: flex; flex-direction: column; gap: 10px; }
+.linkish { border: 0; background: none; padding: 0; color: var(--bad); cursor: pointer; text-align: left; text-decoration: underline; text-underline-offset: 2px; }
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; color: var(--ink); }
+
+/* ---------- question ---------- */
+.q-wrap { max-width: 760px; margin-inline: auto; }
+.q-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 14px; }
+.q-num { font-family: var(--mono); font-weight: 600; font-size: 13px; color: var(--accent); letter-spacing: .02em; }
+.q-sys { font-size: 12px; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-3); }
+.q-prog { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.stem { font-family: var(--serif); font-size: 18px; line-height: 1.62; color: var(--ink); }
+.stem p, .rat p { margin: 0 0 14px; }
+.fig { margin: 8px 0 18px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px; overflow-x: auto; }
+.fig img { display: block; margin-inline: auto; height: auto; cursor: zoom-in; }
+.opts { list-style: none; padding: 0; margin: 22px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.opt {
+  width: 100%;
+  display: grid; grid-template-columns: 30px 1fr auto; gap: 12px; align-items: start;
+  text-align: left;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 16px; line-height: 1.45;
+  transition: border-color .12s, background-color .12s;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt .L {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-weight: 600; font-size: 13px; color: var(--ink-2);
+}
+.opt .tx { padding-top: 2px; }
+.opt .res { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; padding-top: 5px; }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+.opt.sel .L { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.opt:disabled { cursor: default; }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.right .L { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.opt.right .res { color: var(--ok); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt.wrong .L { background: var(--bad); border-color: var(--bad); color: var(--surface); }
+.opt.wrong .res { color: var(--bad); }
+.opt.dim { opacity: .62; }
+
+.actions {
+  display: flex; gap: 10px; align-items: center; justify-content: space-between;
+  margin-top: 20px;
+}
+.btn {
+  border: 1.5px solid var(--line); background: var(--surface);
+  border-radius: 10px; padding: 11px 18px; cursor: pointer; font-weight: 600; font-size: 15px;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:disabled { opacity: .45; cursor: default; }
+.kbd-hint { font-size: 12px; color: var(--ink-3); }
+
+.verdict {
+  margin-top: 26px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  font-weight: 600; font-size: 16px;
+}
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict svg { width: 22px; height: 22px; flex: none; }
+.verdict small { display: block; font-weight: 500; font-size: 13px; color: var(--ink-2); }
+.rat-card {
+  margin-top: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 18px 8px;
+}
+.rat-card h3 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-3); font-weight: 600; display: flex; justify-content: space-between; }
+.rat-card h3 span { color: var(--ok); font-family: var(--mono); letter-spacing: 0; font-size: 13px; }
+.rat { font-family: var(--serif); font-size: 16.5px; line-height: 1.62; }
+details.refs { margin: 6px 0 12px; font-size: 13px; color: var(--ink-2); }
+details.refs summary { cursor: pointer; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); padding: 6px 0; }
+details.refs ol { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-direction: column; gap: 6px; }
+
+.done-card { text-align: center; padding: 40px 16px; }
+.done-card h2 { font-size: 22px; margin: 0 0 8px; }
+
+/* zoom overlay */
+.zoom { position: fixed; inset: 0; z-index: 60; background: rgba(8, 12, 15, .88); display: flex; align-items: center; justify-content: center; padding: 16px; overflow: auto; cursor: zoom-out; }
+.zoom img { max-width: none; width: min(1400px, 100%); height: auto; background: #fff; border-radius: 6px; }
+
+/* ---------- phone ---------- */
+@media (max-width: 860px) {
+  .menu-btn { display: inline-flex; }
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .side {
+    position: fixed; z-index: 50;
+    top: 0; bottom: 0; left: 0;
+    width: min(340px, 86vw);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+    transform: translateX(-102%);
+    transition: transform .2s ease;
+    box-shadow: var(--shadow);
+  }
+  body.nav-open .side { transform: none; }
+  body.nav-open .scrim { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(8, 12, 15, .4); }
+  .stats .stat.hide-sm { display: none; }
+  .sync span { display: none; }
+  .brand span { display: none; }
+  .brand b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stats { gap: 12px; }
+  .main { padding-block: 18px 130px; }
+  .stem { font-size: 17px; }
+  .actions.sticky {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    margin: 0;
+    padding: 10px 16px calc(env(safe-area-inset-bottom, 0px) + 10px);
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+  .kbd-hint { display: none; }
+  .actions .btn { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+
+<header class="topbar">
+  <button class="menu-btn" id="menuBtn" aria-label="Show question list">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+  </button>
+  <div class="brand">
+    <b>Critical Care Qbank</b>
+    <span>SCCM Self-Assessment, 9th ed.</span>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="v" id="stAnswered">0/230</span><span class="k">Answered</span></div>
+    <div class="stat"><span class="v" id="stCorrect">0</span><span class="k">Correct</span></div>
+    <div class="stat hide-sm"><span class="v" id="stPct">–</span><span class="k">Score</span></div>
+    <div class="sync" id="sync" data-state="loading"><i></i><span id="syncText">Connecting</span></div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="side" id="side" aria-label="Questions by organ system">
+    <div class="side-summary">
+      <div><span class="v" id="sdAnswered">0</span><span class="k">Done</span></div>
+      <div><span class="v" id="sdCorrect">0</span><span class="k">Correct</span></div>
+      <div><span class="v" id="sdPct">–</span><span class="k">Score</span></div>
+    </div>
+    <div id="sysList"></div>
+    <div class="side-foot">
+      <div>Progress syncs to your Claude account, so you can pick up on any device.</div>
+      <div id="resetArea"><button class="linkish" id="resetBtn">Reset all progress</button></div>
+    </div>
+  </nav>
+  <div class="scrim" id="scrim"></div>
+  <main class="main" id="main">
+    <div class="q-wrap" id="qWrap"><p style="color:var(--ink-3)">Loading questions…</p></div>
+  </main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const LS_KEY = "ccqb.v1";
+  const DOC_PATH = "progress/main";
+
+  // ---------- state ----------
+  let parts = [];          // [{part,title,questions:[...]}]
+  let flat = [];           // questions with .part, .title, .idx
+  let byId = new Map();
+  const state = {
+    answers: {},           // id -> {c: "B", ok: true, t: ms}
+    current: 1,
+  };
+  let pending = {};        // answers not yet confirmed by the server
+  let pendingCurrent = null;
+  let selected = null;     // letter picked but not submitted
+  let db = null, docRef = null, flushing = false, remoteLoaded = false;
+
+  // ---------- local cache ----------
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (s.answers) state.answers = s.answers;
+      if (s.current) state.current = s.current;
+      if (s.pending) pending = s.pending;
+      if (s.pendingCurrent) pendingCurrent = s.pendingCurrent;
+    } catch (e) {}
+  }
+  function saveLocal() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({ answers: state.answers, current: state.current, pending, pendingCurrent }));
+    } catch (e) {}
+  }
+
+  // ---------- sync ----------
+  const syncEl = document.getElementById("sync");
+  const syncText = document.getElementById("syncText");
+  function setSync(s, text) { syncEl.dataset.state = s; syncText.textContent = text; }
+
+  async function connect() {
+    let found = null;
+    try { found = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { found = null; }
+    if (!found) {
+      setSync("local", "This device only");
+      return;
+    }
+    db = found;
+    docRef = db.doc(DOC_PATH);
+    setSync("saving", "Syncing");
+    docRef.onSnapshot(onRemote, () => setSync("offline", "Offline"));
+    window.addEventListener("online", flush);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) flush(); });
+  }
+
+  function onRemote(snap) {
+    const data = snap.exists ? snap.data() : null;
+    const remoteAnswers = (data && data.answers) || {};
+    // server state plus anything this device still has to send
+    const merged = Object.assign({}, remoteAnswers);
+    for (const [id, a] of Object.entries(pending)) {
+      if (remoteAnswers[id] && remoteAnswers[id].t >= a.t) delete pending[id];
+      else merged[id] = a;
+    }
+    state.answers = merged;
+    const firstLoad = !remoteLoaded;
+    remoteLoaded = true;
+    if (pendingCurrent == null && data && data.current && byId.has(data.current)) {
+      const changed = data.current !== state.current;
+      // follow the other device, unless mid-question here
+      if (firstLoad || (changed && selected == null)) state.current = data.current;
+    }
+    saveLocal();
+    renderAll();
+    if (Object.keys(pending).length || pendingCurrent != null) flush();
+    else if (!snap.metadata.hasPendingWrites) setSync("saved", "Synced");
+  }
+
+  async function flush() {
+    if (!docRef || flushing) return;
+    const answers = Object.assign({}, pending);
+    const cur = pendingCurrent;
+    if (!Object.keys(answers).length && cur == null) return;
+    flushing = true;
+    setSync("saving", "Saving");
+    const body = { updatedAt: Date.now() };
+    if (Object.keys(answers).length) body.answers = answers;
+    if (cur != null) body.current = cur;
+    try {
+      try {
+        await docRef.update(body);
+      } catch (e) {
+        if (e && e.code === "invalid_argument") {
+          // first save ever: the document does not exist yet
+          const snap = await docRef.get();
+          if (snap.exists) throw e;
+          await docRef.set({ answers: Object.assign({}, state.answers, answers), current: cur != null ? cur : state.current, updatedAt: Date.now() });
+        } else throw e;
+      }
+      for (const id of Object.keys(answers)) if (pending[id] === answers[id]) delete pending[id];
+      if (pendingCurrent === cur) pendingCurrent = null;
+      saveLocal();
+      setSync("saved", "Synced");
+    } catch (e) {
+      setSync("offline", "Offline, will sync");
+    } finally {
+      flushing = false;
+    }
+    if (Object.keys(pending).length || (pendingCurrent != null && pendingCurrent !== cur)) {
+      if (syncEl.dataset.state !== "offline") flush();
+    }
+  }
+
+  let curTimer = null;
+  function setCurrent(id, { save = true } = {}) {
+    if (!byId.has(id)) return;
+    state.current = id;
+    selected = null;
+    if (save) {
+      pendingCurrent = id;
+      saveLocal();
+      clearTimeout(curTimer);
+      curTimer = setTimeout(flush, 700);
+    }
+    renderAll();
+    document.getElementById("main").scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
+
+  function recordAnswer(id, letter) {
+    const q = byId.get(id);
+    const a = { c: letter, ok: letter === q.answer, t: Date.now() };
+    state.answers[id] = a;
+    pending[id] = a;
+    pendingCurrent = id;
+    saveLocal();
+    clearTimeout(curTimer);
+    flush();
+  }
+
+  async function resetAll() {
+    state.answers = {};
+    pending = {};
+    pendingCurrent = null;
+    state.current = 1;
+    selected = null;
+    saveLocal();
+    renderAll();
+    if (docRef) {
+      setSync("saving", "Saving");
+      try { await docRef.set({ answers: {}, current: 1, updatedAt: Date.now() }); setSync("saved", "Synced"); }
+      catch (e) { setSync("offline", "Reset not synced"); }
+    }
+  }
+
+  // ---------- rendering ----------
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function counts() {
+    let answered = 0, correct = 0;
+    for (const [id, a] of Object.entries(state.answers)) {
+      if (!byId.has(+id)) continue;
+      answered++;
+      if (a.ok) correct++;
+    }
+    return { answered, correct, pct: answered ? Math.round((correct / answered) * 100) + "%" : "–" };
+  }
+
+  function renderStats() {
+    const c = counts();
+    $("stAnswered").textContent = `${c.answered}/${flat.length}`;
+    $("stCorrect").textContent = c.correct;
+    $("stPct").textContent = c.pct;
+    $("sdAnswered").textContent = `${c.answered}/${flat.length}`;
+    $("sdCorrect").textContent = c.correct;
+    $("sdPct").textContent = c.pct;
+  }
+
+  let sideBuilt = false;
+  function buildSide() {
+    const host = $("sysList");
+    host.innerHTML = parts.map((p) => `
+      <section class="sys" id="sys-${p.part}">
+        <button class="sys-head" data-jump="${p.questions[0].id}">
+          <span class="n">${p.part}</span><span class="t">${esc(p.title)}</span><span class="c" id="sysc-${p.part}"></span>
+        </button>
+        <div class="chips">
+          ${p.questions.map((q) => `<button class="chip" id="chip-${q.id}" data-jump="${q.id}" aria-label="Question ${q.id}">${q.id}<span class="mk"></span></button>`).join("")}
+        </div>
+      </section>`).join("");
+    host.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-jump]");
+      if (!b) return;
+      setCurrent(+b.dataset.jump);
+      b.blur(); // so Enter submits the answer instead of re-clicking this number
+      document.body.classList.remove("nav-open");
+    });
+    sideBuilt = true;
+  }
+
+  function renderSide() {
+    if (!sideBuilt) buildSide();
+    for (const q of flat) {
+      const el = $("chip-" + q.id);
+      const a = state.answers[q.id];
+      el.classList.toggle("ok", !!(a && a.ok));
+      el.classList.toggle("bad", !!(a && !a.ok));
+      el.classList.toggle("cur", q.id === state.current);
+      el.querySelector(".mk").textContent = a ? (a.ok ? "✓" : "✗") : "";
+      el.setAttribute("aria-label", `Question ${q.id}${a ? (a.ok ? ", correct" : ", incorrect") : ""}`);
+    }
+    for (const p of parts) {
+      const done = p.questions.filter((q) => state.answers[q.id]).length;
+      $("sysc-" + p.part).textContent = `${done}/${p.questions.length}`;
+    }
+  }
+
+  function scrollChipIntoView() {
+    const el = $("chip-" + state.current);
+    if (el) el.scrollIntoView({ block: "center", behavior: "auto" });
+  }
+
+  function blocksHtml(blocks) {
+    return blocks.map((b) => b.img
+      ? `<figure class="fig"><img src="${b.img.src}" width="${Math.round(b.img.w / 2.2)}" height="${Math.round(b.img.h / 2.2)}" alt="Figure from the question" loading="lazy"></figure>`
+      : `<p>${b.p}</p>`).join("");
+  }
+
+  const ICON_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>';
+  const ICON_BAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></svg>';
+
+  function renderQuestion() {
+    const q = byId.get(state.current);
+    const wrap = $("qWrap");
+    if (!q) return;
+    const a = state.answers[q.id];
+    const letters = q.options.map((_, i) => String.fromCharCode(65 + i));
+    const inPart = parts.find((p) => p.part === q.part);
+    const optHtml = q.options.map((o, i) => {
+      const L = letters[i];
+      let cls = "opt", res = "";
+      if (a) {
+        if (L === q.answer) { cls += " right"; res = a.c === L ? "Your answer" : "Correct"; }
+        else if (L === a.c) { cls += " wrong"; res = "Your answer"; }
+        else cls += " dim";
+      } else if (selected === L) cls += " sel";
+      return `<li><button class="${cls}" data-opt="${L}" ${a ? "disabled" : ""}><span class="L">${L}</span><span class="tx">${o}</span><span class="res">${res}</span></button></li>`;
+    }).join("");
+
+    const isLast = q.idx === flat.length - 1;
+    let actions;
+    if (a) {
+      actions = `<div class="actions sticky">
+        <button class="btn" id="prevBtn" ${q.idx === 0 ? "disabled" : ""}>Previous</button>
+        <span class="kbd-hint">→ or N for next</span>
+        <button class="btn primary" id="nextBtn">${isLast ? "Finish" : "Next question"}</button></div>`;
+    } else {
+      actions = `<div class="actions sticky">
+        <button class="btn" id="prevBtn" ${q.idx === 0 ? "disabled" : ""}>Previous</button>
+        <span class="kbd-hint">Keys A–${letters[letters.length - 1]}, Enter to submit</span>
+        <button class="btn primary" id="submitBtn" ${selected ? "" : "disabled"}>Submit answer</button></div>`;
+    }
+
+    let result = "";
+    if (a) {
+      const verdict = a.ok
+        ? `<div class="verdict ok">${ICON_OK}<div>Correct</div></div>`
+        : `<div class="verdict bad">${ICON_BAD}<div>Incorrect<small>You chose ${a.c}. The correct answer is ${q.answer}.</small></div></div>`;
+      const refs = q.refs.length
+        ? `<details class="refs"><summary>References (${q.refs.length})</summary><ol>${q.refs.map((r) => `<li>${r}</li>`).join("")}</ol></details>`
+        : "";
+      result = `${verdict}
+        <section class="rat-card">
+          <h3>Rationale <span>Answer: ${q.answer}</span></h3>
+          <div class="rat">${blocksHtml(q.rationale)}</div>
+          ${refs}
+        </section>`;
+    }
+
+    wrap.innerHTML = `
+      <div class="q-meta">
+        <span class="q-num">Question ${q.id} of ${flat.length}</span>
+        <span class="q-sys">Part ${q.part} · ${esc(q.title)} · #${q.n} of ${inPart.questions.length}</span>
+      </div>
+      <div class="stem">${blocksHtml(q.stem)}</div>
+      <ol class="opts">${optHtml}</ol>
+      ${result}
+      ${actions}`;
+  }
+
+  function renderAll() {
+    if (!flat.length) return;
+    renderStats();
+    renderSide();
+    renderQuestion();
+  }
+
+  function renderFinished() {
+    const c = counts();
+    const next = flat.find((q) => !state.answers[q.id]);
+    $("qWrap").innerHTML = `<div class="done-card">
+      <h2>End of the book</h2>
+      <p>You have answered ${c.answered} of ${flat.length} questions, with ${c.correct} correct (${c.pct}).</p>
+      ${next ? `<p><button class="btn primary" data-jump-main="${next.id}">Go to first unanswered (#${next.id})</button></p>` : ""}
+    </div>`;
+  }
+
+  // ---------- interactions ----------
+  function submit() {
+    const q = byId.get(state.current);
+    if (!q || !selected || state.answers[q.id]) return;
+    recordAnswer(q.id, selected);
+    selected = null;
+    renderAll();
+  }
+  function goNext() {
+    const q = byId.get(state.current);
+    if (!q) return;
+    if (q.idx === flat.length - 1) { renderFinished(); return; }
+    setCurrent(flat[q.idx + 1].id);
+    scrollChipIntoView();
+  }
+  function goPrev() {
+    const q = byId.get(state.current);
+    if (q && q.idx > 0) { setCurrent(flat[q.idx - 1].id); scrollChipIntoView(); }
+  }
+
+  $("qWrap").addEventListener("click", (e) => {
+    const opt = e.target.closest("[data-opt]");
+    if (opt && !opt.disabled) {
+      selected = opt.dataset.opt;
+      renderQuestion();
+      return;
+    }
+    if (e.target.closest("#submitBtn")) return submit();
+    if (e.target.closest("#nextBtn")) return goNext();
+    if (e.target.closest("#prevBtn")) return goPrev();
+    const jm = e.target.closest("[data-jump-main]");
+    if (jm) { setCurrent(+jm.dataset.jumpMain); scrollChipIntoView(); return; }
+    const img = e.target.closest(".fig img");
+    if (img) {
+      const z = document.createElement("div");
+      z.className = "zoom";
+      z.innerHTML = `<img src="${img.getAttribute("src")}" alt="Enlarged figure">`;
+      z.addEventListener("click", () => z.remove());
+      document.body.appendChild(z);
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // Enter/space on a focused button already fires its click
+    if (e.target.closest && e.target.closest("button") && (e.key === "Enter" || e.key === " ")) return;
+    const q = byId.get(state.current);
+    if (!q) return;
+    const zoom = document.querySelector(".zoom");
+    if (zoom && e.key === "Escape") { zoom.remove(); return; }
+    const k = e.key.toUpperCase();
+    const answered = !!state.answers[q.id];
+    if (!answered && /^[A-F]$/.test(k) && k.charCodeAt(0) - 65 < q.options.length) {
+      selected = k; renderQuestion(); e.preventDefault(); return;
+    }
+    if (!answered && e.key === "Enter" && selected) { submit(); e.preventDefault(); return; }
+    if (answered && (e.key === "ArrowRight" || k === "N" || e.key === "Enter")) { goNext(); e.preventDefault(); return; }
+    if (e.key === "ArrowLeft" || k === "P") { goPrev(); e.preventDefault(); }
+  });
+
+  $("menuBtn").addEventListener("click", () => {
+    document.body.classList.toggle("nav-open");
+    scrollChipIntoView();
+  });
+  $("scrim").addEventListener("click", () => document.body.classList.remove("nav-open"));
+
+  function showResetButton() {
+    $("resetArea").innerHTML = `<button class="linkish" id="resetBtn">Reset all progress</button>`;
+  }
+  $("resetArea").addEventListener("click", (e) => {
+    if (e.target.id === "resetBtn") {
+      $("resetArea").innerHTML = `<div class="confirm">Erase every answer on all devices?
+        <button class="btn" id="resetYes" style="padding:6px 12px;font-size:13px;color:var(--bad)">Erase</button>
+        <button class="btn" id="resetNo" style="padding:6px 12px;font-size:13px">Cancel</button></div>`;
+    } else if (e.target.id === "resetYes") {
+      resetAll(); showResetButton(); document.body.classList.remove("nav-open");
+    } else if (e.target.id === "resetNo") {
+      showResetButton();
+    }
+  });
+
+  // ---------- boot ----------
+  async function boot() {
+    loadLocal();
+    connect();
+    try {
+      const res = await fetch("questions.json");
+      parts = await res.json();
+    } catch (e) {
+      $("qWrap").innerHTML = `<p>The question file did not load. Check your connection and reload the page.</p>`;
+      return;
+    }
+    flat = [];
+    for (const p of parts) for (const q of p.questions) {
+      q.part = p.part; q.title = p.title; q.idx = flat.length;
+      flat.push(q);
+    }
+    byId = new Map(flat.map((q) => [q.id, q]));
+    if (!byId.has(state.current)) state.current = 1;
+    renderAll();
+    scrollChipIntoView();
+  }
+  boot();
+})();
+</script>
